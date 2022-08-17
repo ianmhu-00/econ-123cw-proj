@@ -1,0 +1,107 @@
+---
+title: "123CW Model"
+output: html_document
+---
+
+```{r}
+# loading libraries
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(GGally)
+library(leaps)
+library(MASS)
+```
+
+```{r}
+# loading data from formatted excel file
+data <- read_excel("~/Desktop/R Codes/123CW | Econometrics Writing/data.xlsx")
+```
+
+# EXPLORATORY DATA ANALYSIS
+```{r}
+summary(data)
+  # 51 obs, 50 states + District of Columbia
+```
+
+```{r}
+a <- data %>% 
+  select(Pov, Educ, Spd)
+  # Pov ~ Educ has clear negative relationship
+  # Pov ~ Spd has negative relationship
+  # Pov ~ 
+b <- data %>% 
+  select(Pov, PS, Urb)
+c <- data %>% 
+  select(Pov, Gini, CoL, Unemp)
+pairs(a)
+pairs(b)
+pairs(c)
+```
+
+
+```{r}
+data %>%
+  ggplot(aes(x = Educ, y = Pov)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x="College Completion Rate (Adults 25+)", y = "Poverty Rate", title = "Poverty Rate ~ Education Rate")
+  
+```
+
+# Modeling Poverty Rates against Variables
+```{r}
+# lm of poverty rate on education rate
+mod1 <- lm(Pov ~ Educ, data = data)
+summary(mod1)
+```
+
+```{r}
+# lm of poverty rate on all covariates
+mod2 <- lm(Pov ~ . - State, data = data)
+summary(mod2)
+```
+
+```{r}
+mod3 <- lm(Pov ~ . - State - PS - CoL, data = data)
+summary(mod3)
+```
+
+```{r}
+mod4 <- lm(Pov ~ . - State - Unemp, data)
+summary(mod4)
+```
+
+```{r}
+step_mod <- regsubsets(Pov ~ . - State, data)
+summary(step_mod) # stepwise prefers full model
+```
+
+
+```{r}
+anova(mod2, mod3) # as p > 0.05, reduced model (mod3) is insufficient, so full (mod2) is needed
+```
+
+```{r}
+anova(mod3, mod2)
+```
+
+
+```{r}
+plot(mod2$residuals)
+abline(0, 0)
+abline(lm(residuals~fitted.values, mod2))
+plot(mod2$fitted.values)
+```
+
+```{r}
+# Histogram of residuals
+ggplot(data = data, aes(x = mod2$residuals)) +
+    geom_histogram(fill = 'steelblue', color = 'black') +
+    labs(title = 'Histogram of Residuals', x = 'Residuals', y = 'Frequency')
+```
+```{r}
+cor(data$Pov, data$Unemp)
+```
+
+
